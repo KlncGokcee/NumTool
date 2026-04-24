@@ -1,131 +1,242 @@
-/*
- * math_utils.c
- * Tüm sayı teorisi algoritmalarının implementasyonu.
- * GCD, INV, POW, PRIME, PHI fonksiyonlarını içerir.
+/**
+ * \file        parser.c
+ *
+ * \brief       Girdi dosyasını okur, satırları ayrıştırır ve
+ *              CommandRecord listesini dinamik olarak doldurur.
+ *
+ * \developer   Mustafa Sarı, Gokce Kılınc
+ *
+
+ *
  */
 
-#include "math_utils.h"
+/* --------------    Include Files    ----------------------------------------------- */
 
-/* -------------------------------------------------------
- * GCD: Öklid Algoritması
- * O(log(min(a,b))) zaman karmaşıklığı
- * ------------------------------------------------------- */
-long long gcd(long long a, long long b) {
-    /* b sıfır olana kadar modül al, sonra a'yı döndür */
-    while (b != 0) {
-        long long temp = b;
-        b = a % b;
-        a = temp;
-    }
-    return a;
+#define _POSIX_C_SOURCE 200809L
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include "parser.h"
+
+
+/* --------------    Static Variables    -------------------------------------------- */
+
+#define INITIAL_CAPACITY 8    // Başlangıç kapasitesi
+#define LINE_SIZE        512  // Maksimum satır uzunluğu
+
+/* --------------    Static Function Prototypes    ----------------------------------- */
+
+static char *trim(char *s);
+static int   add_record(CommandList *list, CommandRecord *rec);
+static void  parse_command(char *token, CommandRecord *rec);
+
+/*
+ **  ---------------------------------------------------------------------------
+ **  Name : trim
+ **
+ ** \brief
+ **          Verilen karakter dizisinin baştaki ve sondaki boşluk
+ **          karakterlerini temizler.\n
+ **          Component : Parser \n
+ **
+ ** \param [in] char *s - Temizlenecek karakter dizisi
+ **
+ ** \returns char*   Temizlenmiş dizinin başlangıç adresi
+ **
+ **  ---------------------------------------------------------------------------
+ */
+
+/* --------------    Function Declarations    ---------------------------------------- */
+
+static char *trim(char *s) {
+
+    // Baştaki boşlukları atla
+    while (isspace((unsigned char)*s)) s++;
+    if (*s == '\0') return s;
+
+    // Sondaki boşlukları sil
+    char *end = s + strlen(s) - 1;
+    while (end > s && isspace((unsigned char)*end)) end--;
+    *(end + 1) = '\0';
+    return s;
 }
 
-/* -------------------------------------------------------
- * Genişletilmiş Öklid Algoritması
- * a*x + b*y = gcd(a,b) denkleminin x ve y katsayılarını bulur.
- * Modüler ters hesaplamak için kullanılır.
- * ------------------------------------------------------- */
-static long long extended_gcd(long long a, long long b,
-                               long long *x, long long *y) {
-    if (b == 0) {
-        *x = 1;
-        *y = 0;
-        return a;
+/*
+ **  ---------------------------------------------------------------------------
+ **  Name : create_list
+ **
+ ** \brief
+ **          Dinamik komut listesi oluşturur ve başlangıç belleğini heap'te
+ **          ayırır.\n
+ **          Component : Parser \n
+ **
+ ** \returns CommandList*   Başarıda geçerli işaretçi; bellek hatasında NULL
+ **
+ **  ---------------------------------------------------------------------------
+ */
+CommandList *create_list(void) {
+    CommandList *list = (CommandList *)malloc(sizeof(CommandList));
+    if (!list) return NULL;
+
+    list->records = (CommandRecord *)malloc(INITIAL_CAPACITY * sizeof(CommandRecord));
+    if (!list->records) {
+        free(list);
+        return NULL;
     }
-    long long x1, y1;
-    long long g = extended_gcd(b, a % b, &x1, &y1);
-    *x = y1;
-    *y = x1 - (a / b) * y1;
-    return g;
+    list->size     = 0;
+    list->capacity = INITIAL_CAPACITY;
+    return list;
 }
 
-/* -------------------------------------------------------
- * mod_inverse: Modüler Ters
- * (a * sonuç) % m = 1 eşitliğini sağlayan sonucu bulur.
- * found: ters bulunamazsa 0, bulunursa 1 yapılır.
- * ------------------------------------------------------- */
-long long mod_inverse(long long a, long long m, int *found) {
-    long long x, y;
-    long long g = extended_gcd(a, m, &x, &y);
+/*
+ **  ---------------------------------------------------------------------------
+ **  Name : add_record
+ **
+ ** \brief
+ **          Listeye yeni bir komut kaydı ekler. Kapasite dolarsa realloc
+ **          ile iki katına büyütür.\n
+ **          Component : Parser \n
+ **
+ ** \param [in] CommandList   *list - Kaydın ekleneceği liste
+ ** \param [in] CommandRecord *rec  - Eklenecek komut kaydı
+ **
+ ** \returns int    1 : Başarıyla eklendi
+ **                 0 : Bellek hatası
+ **
+ **  ---------------------------------------------------------------------------
+ */
+static int add_record(CommandList *list, CommandRecord *rec) {
 
-    /* GCD 1 değilse modüler ters yoktur */
-    if (g != 1) {
-        *found = 0;
-        return 0;
+    // Kapasite doldu mu?
+    if (list->size >= list->capacity) {
+        int new_cap = list->capacity * 2;
+        CommandRecord *tmp = (CommandRecord *)realloc(
+                list->records, new_cap * sizeof(CommandRecord));
+        if (!tmp) return 0; // Bellek hatası
+        list->records  = tmp;
+        list->capacity = new_cap;
     }
-
-    *found = 1;
-    /* x negatif çıkabilir, pozitife çevir */
-    return (x % m + m) % m;
-}
-
-/* -------------------------------------------------------
- * power_mod: İkili Üs Alma
- * (base^exp) % mod işlemi O(log exp) karmaşıklığında.
- * ------------------------------------------------------- */
-long long power_mod(long long base, long long exp, long long mod) {
-    long long result = 1;
-    base = base % mod;
-
-    while (exp > 0) {
-        /* Üs tek ise sonuca tabanı çarp */
-        if (exp % 2 == 1) {
-            result = (result * base) % mod;
-        }
-        /* Tabanın karesini al, üssü ikiye böl */
-        base = (base * base) % mod;
-        exp = exp >> 1; /* exp / 2 ile aynı */
-    }
-    return result;
-}
-
-/* -------------------------------------------------------
- * is_prime: Asallık Testi
- * O(sqrt(N)) zaman karmaşıklığı.
- * 6k±1 optimizasyonu uygulanmıştır.
- * ------------------------------------------------------- */
-int is_prime(long long n) {
-    /* 1 ve altı asal değil */
-    if (n <= 1) return 0;
-    /* 2 ve 3 asaldır */
-    if (n == 2 || n == 3) return 1;
-    /* Çift sayılar ve 3'ün katları asal değil */
-    if (n % 2 == 0 || n % 3 == 0) return 0;
-
-    /* i = 5'ten başla, sadece 6k-1 ve 6k+1 formundaki
-     * sayılarla böl, i*i <= n sınırına kadar devam et */
-    long long i = 5;
-    while (i * i <= n) {
-        if (n % i == 0 || n % (i + 2) == 0) return 0;
-        i += 6;
-    }
+    list->records[list->size++] = *rec;
     return 1;
 }
 
-/* -------------------------------------------------------
- * euler_phi: Euler Totient Fonksiyonu
- * PHI(N) = N * Π(1 - 1/p) (p: asal çarpanlar)
- * Hassasiyet için tam sayı aritmetiği kullanılır.
- * O(sqrt(N)) karmaşıklığında asal çarpanlara ayırma.
- * ------------------------------------------------------- */
-long long euler_phi(long long n) {
-    long long result = n;
-    long long temp   = n;
+/*
+ **  ---------------------------------------------------------------------------
+ **  Name : parse_command
+ **
+ ** \brief
+ **          Tek bir komut metnini (örn: "GCD 48 18") ayrıştırır ve
+ **          CommandRecord yapısını komut adı ile parametrelerle doldurur.\n
+ **          Component : Parser \n
+ **
+ ** \param [in]  char          *token - Ayrıştırılacak komut metni
+ ** \param [out] CommandRecord *rec   - Doldurulan komut kaydı
+ **
+ ** \returns void
+ **
+ **  ---------------------------------------------------------------------------
+ */
+static void parse_command(char *token, CommandRecord *rec) {
+    memset(rec, 0, sizeof(CommandRecord));
 
-    /* Asal çarpanlara ayır ve formülü uygula */
-    for (long long p = 2; p * p <= temp; p++) {
-        if (temp % p == 0) {
-            /* p bir asal çarpan: result = result - result/p */
-            result = result - (result / p);
-            /* p'nin tüm katlarını böl */
-            while (temp % p == 0) {
-                temp /= p;
+    // Komut adını oku
+    char cmd[20] = {0};
+    int  offset  = 0;
+
+    if (sscanf(token, "%19s%n", cmd, &offset) < 1) {
+        snprintf(rec->result, sizeof(rec->result), "PARSE_ERROR");
+        rec->is_error = 1;
+        return;
+    }
+    snprintf(rec->command, sizeof(rec->command), "%s", cmd);
+
+    // Parametreleri oku
+    char     *rest = token + offset;
+    long long  val;
+    int        n;
+
+    rec->arg_count = 0;
+    while (sscanf(rest, " %lld%n", &val, &n) == 1
+           && rec->arg_count < 4) {
+        rec->args[rec->arg_count++] = val;
+        rest += n;
+    }
+}
+
+/*
+ **  ---------------------------------------------------------------------------
+ **  Name : parse_file
+ **
+ ** \brief
+ **          Girdi dosyasını satır satır okur. Yorum satırlarını (//) ve boş
+ **          satırları atlar. Noktalı virgülle ayrılmış komutları bölerek
+ **          listeye ekler.\n
+ **          Component : Parser \n
+ **
+ ** \param [in]  const char  *filename - Okunacak dosyanın yolu
+ ** \param [out] CommandList *list     - Ayrıştırılan komutların ekleneceği liste
+ **
+ ** \returns int    1 : Başarıyla tamamlandı
+ **                 0 : Dosya açılamadı veya bellek hatası
+ **
+ **  ---------------------------------------------------------------------------
+ */
+int parse_file(const char *filename, CommandList *list) {
+    FILE *fp = fopen(filename, "r");
+    if (!fp) {
+        fprintf(stderr, "Hata: '%s' dosyasi acilamadi.\n", filename);
+        return 0;
+    }
+
+    char line[LINE_SIZE];
+
+    while (fgets(line, sizeof(line), fp)) {
+        char *trimmed = trim(line);
+
+        /* Boş satır veya yorum satırı ise atla */
+        if (trimmed[0] == '\0' || trimmed[0] == '#') continue;
+
+        /* Noktalı virgülle ayrılmış komutları böl */
+        char *saveptr = NULL;
+        char *token   = strtok_r(trimmed, ";", &saveptr);
+
+        while (token != NULL) {
+            char *t = trim(token);
+            if (t[0] != '\0') {
+                CommandRecord rec;
+                parse_command(t, &rec);
+                if (!add_record(list, &rec)) {
+                    fprintf(stderr, "Hata: Komut listesi genisletilemedi.\n");
+                    fclose(fp);
+                    return 0;
+                }
             }
+            token = strtok_r(NULL, ";", &saveptr);
         }
     }
-    /* Kalan asal çarpan varsa (temp > 1) */
-    if (temp > 1) {
-        result = result - (result / temp);
-    }
-    return result;
+
+    fclose(fp);
+    return 1;
+}
+
+/*
+ **  ---------------------------------------------------------------------------
+ **  Name : free_list
+ **
+ ** \brief
+ **          Dinamik listeyi ve tüm ayrılmış belleği serbest bırakır.
+ **          NULL işaretçi ile çağrılması güvenlidir.\n
+ **          Component : Parser \n
+ **
+ ** \param [in] CommandList *list - Serbest bırakılacak liste işaretçisi
+ **
+ ** \returns void
+ **
+ **  ---------------------------------------------------------------------------
+ */
+void free_list(CommandList *list) {
+    if (!list) return;
+    free(list->records);
+    free(list);
 }

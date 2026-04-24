@@ -1,11 +1,16 @@
 /*
- * main.c
- * NumTool - Sayı Teorisi Hesaplama Aracı
- * Ana kontrol akışı: argüman kontrolü, dosya işlemleri,
- * komutların çalıştırılması ve sonuçların yazılması.
+ * \file        main.c
  *
- * Kullanım: ./numtool <giris_dosyasi> <cikis_dosyasi>
+ * \brief       NumTool - Sayı Teorisi Hesaplama Aracı.
+ *              Ana kontrol akışı: argüman kontrolü, dosya işlemleri,
+ *              komutların çalıştırılması ve sonuçların yazılması.
+ *
+ * \developer   Gokce Kılınc, Mustafa Sarı
+ *
+ *
  */
+
+/* --------------    Include Files    ----------------------------------------------- */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,10 +18,31 @@
 #include "parser.h"
 #include "math_utils.h"
 
-/* -------------------------------------------------------
- * Her CommandRecord'u işler: uygun fonksiyonu çağırır,
- * sonucu result alanına yazar, hata varsa is_error = 1 yapar.
- * ------------------------------------------------------- */
+
+/* --------------    Static Function Prototypes    ----------------------------------- */
+
+static void execute_record(CommandRecord *rec);
+static void write_results(const char *filename, CommandList *list);
+
+
+/*
+ **  ---------------------------------------------------------------------------
+ **  Name : execute_record
+ **
+ ** \brief
+ **          Her CommandRecord'u işler: uygun matematik fonksiyonunu çağırır,
+ **          sonucu result alanına yazar, hata varsa is_error = 1 yapar.\n
+ **          Component : Main \n
+ **
+ ** \param [in] CommandRecord *rec - İşlenecek komut kaydı
+ **
+ ** \returns void
+ **
+ **  ---------------------------------------------------------------------------
+ */
+
+/* --------------    Function Declarations    ---------------------------------------- */
+
 static void execute_record(CommandRecord *rec) {
     char *cmd = rec->command;
 
@@ -32,7 +58,7 @@ static void execute_record(CommandRecord *rec) {
             snprintf(rec->result, sizeof(rec->result), "%lld", r);
         }
 
-    /* ---- POW komutu ---- */
+        /* ---- POW komutu ---- */
     } else if (strcmp(cmd, "POW") == 0) {
         if (rec->arg_count < 3
             || rec->args[2] <= 0 || rec->args[1] < 0) {
@@ -46,7 +72,7 @@ static void execute_record(CommandRecord *rec) {
             snprintf(rec->result, sizeof(rec->result), "%lld", r);
         }
 
-    /* ---- PRIME komutu ---- */
+        /* ---- PRIME komutu ---- */
     } else if (strcmp(cmd, "PRIME") == 0) {
         if (rec->arg_count < 1 || rec->args[0] < 2) {
             snprintf(rec->result, sizeof(rec->result),
@@ -57,7 +83,7 @@ static void execute_record(CommandRecord *rec) {
                      is_prime(rec->args[0]) ? "YES" : "NO");
         }
 
-    /* ---- INV komutu ---- */
+        /* ---- INV komutu ---- */
     } else if (strcmp(cmd, "INV") == 0) {
         if (rec->arg_count < 2 || rec->args[1] <= 1) {
             snprintf(rec->result, sizeof(rec->result),
@@ -77,7 +103,7 @@ static void execute_record(CommandRecord *rec) {
             }
         }
 
-    /* ---- PHI komutu ---- */
+        /* ---- PHI komutu ---- */
     } else if (strcmp(cmd, "PHI") == 0) {
         if (rec->arg_count < 1 || rec->args[0] < 1) {
             snprintf(rec->result, sizeof(rec->result),
@@ -88,16 +114,16 @@ static void execute_record(CommandRecord *rec) {
             snprintf(rec->result, sizeof(rec->result), "%lld", r);
         }
 
-    /* ---- CHECK komutu ---- */
+        /* ---- CHECK komutu ---- */
     } else if (strcmp(cmd, "CHECK") == 0) {
         if (rec->arg_count < 2 || rec->args[1] <= 1) {
             snprintf(rec->result, sizeof(rec->result),
                      "ERROR_INVALID_INPUT");
             rec->is_error = 1;
         } else {
-            long long a = rec->args[0];
-            long long m = rec->args[1];
-            int found   = 0;
+            long long a   = rec->args[0];
+            long long m   = rec->args[1];
+            int       found = 0;
             long long inv = mod_inverse(a, m, &found);
 
             if (!found) {
@@ -112,7 +138,7 @@ static void execute_record(CommandRecord *rec) {
             }
         }
 
-    /* ---- Bilinmeyen komut ---- */
+        /* ---- Bilinmeyen komut ---- */
     } else {
         snprintf(rec->result, sizeof(rec->result),
                  "ERROR_UNKNOWN_COMMAND");
@@ -120,12 +146,23 @@ static void execute_record(CommandRecord *rec) {
     }
 }
 
-/* -------------------------------------------------------
- * Tüm komut kayıtlarını çıktı dosyasına yazar.
- * Format: KOMUT ARG1 ARG2 ... -> SONUÇ
- * ------------------------------------------------------- */
-static void write_results(const char *filename,
-                           CommandList *list) {
+/*
+ **  ---------------------------------------------------------------------------
+ **  Name : write_results
+ **
+ ** \brief
+ **          Tüm komut kayıtlarını çıktı dosyasına yazar.
+ **          Format: KOMUT ARG1 ARG2 ... -> SONUÇ\n
+ **          Component : Main \n
+ **
+ ** \param [in] const char    *filename - Yazılacak çıktı dosyasının yolu
+ ** \param [in] CommandList   *list     - Yazılacak komut listesi
+ **
+ ** \returns void
+ **
+ **  ---------------------------------------------------------------------------
+ */
+static void write_results(const char *filename, CommandList *list) {
     FILE *fp = fopen(filename, "w");
     if (!fp) {
         fprintf(stderr, "Hata: '%s' cikis dosyasi acilamadi.\n",
@@ -151,15 +188,31 @@ static void write_results(const char *filename,
     fclose(fp);
 }
 
-/* -------------------------------------------------------
- * main: Argüman kontrolü, liste oluşturma, işleme, yazma.
- * ------------------------------------------------------- */
+/*
+ **  ---------------------------------------------------------------------------
+ **  Name : main
+ **
+ ** \brief
+ **          Program giriş noktası. Argüman kontrolü, liste oluşturma,
+ **          komut işleme ve sonuç yazma adımlarını sırasıyla yürütür.\n
+ **          Component : Main \n
+ **
+ ** \param [in] int    argc     - Komut satırı argüman sayısı
+ ** \param [in] char  *argv[]   - Komut satırı argümanları
+ **                               argv[1]: Girdi dosyası yolu
+ **                               argv[2]: Çıktı dosyası yolu
+ **
+ ** \returns int    0 : Başarıyla tamamlandı
+ **                 1 : Hata oluştu
+ **
+ **  ---------------------------------------------------------------------------
+ */
 int main(int argc, char *argv[]) {
     /* Argüman sayısı kontrolü */
     if (argc != 3) {
         fprintf(stderr,
-            "Kullanim: %s <giris_dosyasi> <cikis_dosyasi>\n",
-            argv[0]);
+                "Kullanim: %s <giris_dosyasi> <cikis_dosyasi>\n",
+                argv[0]);
         return 1;
     }
 
@@ -190,7 +243,7 @@ int main(int argc, char *argv[]) {
     printf("Tamamlandi: %d komut islendi. Sonuclar '%s' dosyasina yazildi.\n",
            list->size, output_file);
 
-    /* Tüm dinamik belleği serbest bırak (bellek sızıntısı yok) */
+    /* Tüm dinamik belleği serbest bırak */
     free_list(list);
     return 0;
 }
