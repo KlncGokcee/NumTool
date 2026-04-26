@@ -1,9 +1,12 @@
 # Makefile - NumTool projesi derleme otomasyonu
 # Kullanım: terminalde sadece "make" yaz, "make clean" ile temizle.
 
+<<<<<<< HEAD
 #MakeFile, temizlik işlerinde sorumludur. Makefile'dan silersen, bir daha programını derleyemezsin!
 
 
+=======
+>>>>>>> cd7e91aecdf2aed3ceeb22ef033022f8ad57696e
 CC      = gcc
 CFLAGS  = -Wall -Wextra -std=c99 -O2
 TARGET  = numtool

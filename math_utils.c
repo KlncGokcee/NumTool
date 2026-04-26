@@ -127,7 +127,8 @@ static int add_record(CommandList *list, CommandRecord *rec) {
  ** \brief
  **          Tek bir komut metnini (örn: "GCD 48 18") ayrıştırır ve
  **          CommandRecord yapısını komut adı ile parametrelerle doldurur.
- *           Bilgisayarın anlayacağı bir formata sokar.\n
+ **          Bilgisayarın anlayacağı bir formata sokar.\n
+ **
  **          Component : Parser \n
  **
  ** \param [in]  char          *token - Ayrıştırılacak komut metni

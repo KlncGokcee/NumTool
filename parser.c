@@ -10,6 +10,7 @@
  */
 
 
+
 /* --------------    Include Files    ----------------------------------------------- */
 
 #define _POSIX_C_SOURCE 200809L
@@ -49,6 +50,7 @@ static void  parse_command(char *token, CommandRecord *rec);
  */
 
 /* --------------    Function Declarations    ---------------------------------------- */
+
 
 static char *trim(char *s) {
     // Baştaki boşlukları atla
@@ -137,6 +139,7 @@ static int add_record(CommandList *list, CommandRecord *rec) {
  **
  **  ---------------------------------------------------------------------------
  */
+
 
 static void parse_command(char *token, CommandRecord *rec) {
     memset(rec, 0, sizeof(CommandRecord));
