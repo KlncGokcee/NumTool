@@ -21,13 +21,13 @@
 
 /* --------------    Static Function Prototypes    ----------------------------------- */
 
-static void execute_record(CommandRecord *rec);
-static void write_results(const char *filename, CommandList *list);
+static void komutu_calistir(CommandRecord *rec);
+static void sonuclari_yazdir(const char *filename, CommandList *list);
 
 
 /*
  **  ---------------------------------------------------------------------------
- **  Name : execute_record
+ **  Name : komutu_calistir
  **
  ** \brief
  **          Her CommandRecord'u işler: uygun matematik fonksiyonunu çağırır,
@@ -43,10 +43,10 @@ static void write_results(const char *filename, CommandList *list);
 
 /* --------------    Function Declarations    ---------------------------------------- */
 
-static void execute_record(CommandRecord *rec) {
+static void komutu_calistir(CommandRecord *rec) {
     char *cmd = rec->command;
 
-    /* ---- GCD komutu ---- */
+    /* ---- GCD komutu (A ve B'nin EBOB'unu hespalar) ---- */
     if (strcmp(cmd, "GCD") == 0) {
         if (rec->arg_count < 2
             || rec->args[0] <= 0 || rec->args[1] <= 0) {
@@ -58,7 +58,7 @@ static void execute_record(CommandRecord *rec) {
             snprintf(rec->result, sizeof(rec->result), "%lld", r);
         }
 
-        /* ---- POW komutu ---- */
+        /* ---- POW komutu (Taban üs) ---- */
     } else if (strcmp(cmd, "POW") == 0) {
         if (rec->arg_count < 3
             || rec->args[2] <= 0 || rec->args[1] < 0) {
@@ -83,7 +83,7 @@ static void execute_record(CommandRecord *rec) {
                      is_prime(rec->args[0]) ? "YES" : "NO");
         }
 
-        /* ---- INV komutu ---- */
+        /* ---- INV komutu (A'nın M modundaki tersini hesaplar) ---- */
     } else if (strcmp(cmd, "INV") == 0) {
         if (rec->arg_count < 2 || rec->args[1] <= 1) {
             snprintf(rec->result, sizeof(rec->result),
@@ -103,7 +103,7 @@ static void execute_record(CommandRecord *rec) {
             }
         }
 
-        /* ---- PHI komutu ---- */
+        /* ---- PHI komutu(Euler Totient fonksiyonunu hesaplar) ---- */
     } else if (strcmp(cmd, "PHI") == 0) {
         if (rec->arg_count < 1 || rec->args[0] < 1) {
             snprintf(rec->result, sizeof(rec->result),
@@ -114,7 +114,7 @@ static void execute_record(CommandRecord *rec) {
             snprintf(rec->result, sizeof(rec->result), "%lld", r);
         }
 
-        /* ---- CHECK komutu ---- */
+        /* ---- CHECK komutu (Modüler tersin doğruluğunu test eder) ---- */
     } else if (strcmp(cmd, "CHECK") == 0) {
         if (rec->arg_count < 2 || rec->args[1] <= 1) {
             snprintf(rec->result, sizeof(rec->result),
@@ -148,7 +148,7 @@ static void execute_record(CommandRecord *rec) {
 
 /*
  **  ---------------------------------------------------------------------------
- **  Name : write_results
+ **  Name : sonuclari_yazdir
  **
  ** \brief
  **          Tüm komut kayıtlarını çıktı dosyasına yazar.
@@ -162,7 +162,7 @@ static void execute_record(CommandRecord *rec) {
  **
  **  ---------------------------------------------------------------------------
  */
-static void write_results(const char *filename, CommandList *list) {
+static void sonuclari_yazdir(const char *filename, CommandList *list) {
     FILE *fp = fopen(filename, "w");
     if (!fp) {
         fprintf(stderr, "Hata: '%s' cikis dosyasi acilamadi.\n",
@@ -208,6 +208,7 @@ static void write_results(const char *filename, CommandList *list) {
  **  ---------------------------------------------------------------------------
  */
 int main(int argc, char *argv[]) {
+
     /* Argüman sayısı kontrolü */
     if (argc != 3) {
         fprintf(stderr,
@@ -234,11 +235,11 @@ int main(int argc, char *argv[]) {
 
     /* Her komutu çalıştır */
     for (int i = 0; i < list->size; i++) {
-        execute_record(&list->records[i]);
+        komutu_calistir(&list->records[i]);
     }
 
     /* Sonuçları çıktı dosyasına yaz */
-    write_results(output_file, list);
+    sonuclari_yazdir(output_file, list);
 
     printf("Tamamlandi: %d komut islendi. Sonuclar '%s' dosyasina yazildi.\n",
            list->size, output_file);

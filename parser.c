@@ -1,5 +1,4 @@
-/* ----------------------------------------------------------------------------------- */
-/**
+/*
  * \file        parser.c
  *
  * \brief       Girdi dosyasını okur, satırları ayrıştırır ve
@@ -7,10 +6,9 @@
  *
  * \developer   Gokce Kılınc, Mustafa Sarı
  *
-
  *
  */
-/* ----------------------------------------------------------------------------------- */
+
 
 /* --------------    Include Files    ----------------------------------------------- */
 
@@ -33,11 +31,10 @@ static char *trim(char *s);
 static int   add_record(CommandList *list, CommandRecord *rec);
 static void  parse_command(char *token, CommandRecord *rec);
 
-/* --------------    Function Declarations    ---------------------------------------- */
 
 /*
  **  ---------------------------------------------------------------------------
- **  Name : trim
+ **  Name : trim (kırpmak/temizlemek)
  **
  ** \brief
  **          Verilen karakter dizisinin baştaki ve sondaki boşluk
@@ -50,6 +47,9 @@ static void  parse_command(char *token, CommandRecord *rec);
  **
  **  ---------------------------------------------------------------------------
  */
+
+/* --------------    Function Declarations    ---------------------------------------- */
+
 static char *trim(char *s) {
     // Baştaki boşlukları atla
     while (isspace((unsigned char)*s)) s++;
@@ -121,7 +121,7 @@ static int add_record(CommandList *list, CommandRecord *rec) {
     return 1;
 }
 
-/**
+/*
  **  ---------------------------------------------------------------------------
  **  Name : parse_command
  **
@@ -137,6 +137,7 @@ static int add_record(CommandList *list, CommandRecord *rec) {
  **
  **  ---------------------------------------------------------------------------
  */
+
 static void parse_command(char *token, CommandRecord *rec) {
     memset(rec, 0, sizeof(CommandRecord));
 
@@ -164,7 +165,7 @@ static void parse_command(char *token, CommandRecord *rec) {
     }
 }
 
-/**
+/*
  **  ---------------------------------------------------------------------------
  **  Name : parse_file
  **
@@ -182,6 +183,7 @@ static void parse_command(char *token, CommandRecord *rec) {
  **
  **  ---------------------------------------------------------------------------
  */
+
 int parse_file(const char *filename, CommandList *list) {
     FILE *fp = fopen(filename, "r");
     if (!fp) {
