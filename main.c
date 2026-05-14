@@ -5,7 +5,7 @@
  *              Ana kontrol akışı: argüman kontrolü, dosya işlemleri,
  *              komutların çalıştırılması ve sonuçların yazılması.
  *
- * \developer   Gokce Kılınc, Mustafa Sarı
+ * \developer   Gokce Kılınc  No : 430634 , Mustafa Sari  No : 425511
  *
  *
  */
@@ -22,8 +22,8 @@
 /* --------------    Static Function Prototypes    ----------------------------------- */
 
 
-static void komutu_calistir(CommandRecord *rec);
-static void sonuclari_yazdir(const char *filename, CommandList *list);
+static void komutu_calistir(CommandRecord *kayit);
+static void sonuclari_yazdir(const char *dosya_adi, CommandList *liste);
 
 
 
@@ -37,7 +37,7 @@ static void sonuclari_yazdir(const char *filename, CommandList *list);
  **          sonucu result alanına yazar, hata varsa is_error = 1 yapar.\n
  **          Component : Main \n
  **
- ** \param [in] CommandRecord *rec - İşlenecek komut kaydı
+ ** \param [in] CommandRecord *kayit - İşlenecek komut kaydı
  **
  ** \returns void
  **
@@ -47,115 +47,115 @@ static void sonuclari_yazdir(const char *filename, CommandList *list);
 /* --------------    Function Declarations    ---------------------------------------- */
 
 
-static void komutu_calistir(CommandRecord *rec) {
-    char *cmd = rec->command;
+static void komutu_calistir(CommandRecord *kayit) {
+    char *komut = kayit->command;
 
-    /* ---- GCD komutu (A ve B'nin EBOB'unu hespalar) ---- */
+    /* ---- GCD komutu (A ve B'nin EBOB'unu hesaplar) ---- */
 
-    if (strcmp(cmd, "GCD") == 0) {
-        if (rec->arg_count < 2
-            || rec->args[0] <= 0 || rec->args[1] <= 0) {
-            snprintf(rec->result, sizeof(rec->result),
+    if (strcmp(komut, "GCD") == 0) {
+        if (kayit->arg_count < 2
+            || kayit->args[0] <= 0 || kayit->args[1] <= 0) {
+            snprintf(kayit->result, sizeof(kayit->result),
                      "ERROR_INVALID_INPUT");
-            rec->is_error = 1;
+            kayit->is_error = 1;
         } else {
-            long long r = gcd(rec->args[0], rec->args[1]);
-            snprintf(rec->result, sizeof(rec->result), "%lld", r);
+            long long sonuc = gcd(kayit->args[0], kayit->args[1]);
+            snprintf(kayit->result, sizeof(kayit->result), "%lld", sonuc);
         }
 
 
         /* ---- POW komutu (Taban üs) ---- */
 
-    } else if (strcmp(cmd, "POW") == 0) {
-        if (rec->arg_count < 3
-            || rec->args[2] <= 0 || rec->args[1] < 0) {
-            snprintf(rec->result, sizeof(rec->result),
+    } else if (strcmp(komut, "POW") == 0) {
+        if (kayit->arg_count < 3
+            || kayit->args[2] <= 0 || kayit->args[1] < 0) {
+            snprintf(kayit->result, sizeof(kayit->result),
                      "ERROR_INVALID_INPUT");
-            rec->is_error = 1;
+            kayit->is_error = 1;
         } else {
-            long long r = power_mod(rec->args[0],
-                                    rec->args[1],
-                                    rec->args[2]);
-            snprintf(rec->result, sizeof(rec->result), "%lld", r);
+            long long sonuc = power_mod(kayit->args[0],
+                                        kayit->args[1],
+                                        kayit->args[2]);
+            snprintf(kayit->result, sizeof(kayit->result), "%lld", sonuc);
         }
 
         /* ---- PRIME komutu ---- */
-    } else if (strcmp(cmd, "PRIME") == 0) {
-        if (rec->arg_count < 1 || rec->args[0] < 2) {
-            snprintf(rec->result, sizeof(rec->result),
+    } else if (strcmp(komut, "PRIME") == 0) {
+        if (kayit->arg_count < 1 || kayit->args[0] < 2) {
+            snprintf(kayit->result, sizeof(kayit->result),
                      "ERROR_INVALID_INPUT");
-            rec->is_error = 1;
+            kayit->is_error = 1;
         } else {
-            snprintf(rec->result, sizeof(rec->result),
-                     is_prime(rec->args[0]) ? "YES" : "NO");
+            snprintf(kayit->result, sizeof(kayit->result),
+                     is_prime(kayit->args[0]) ? "YES" : "NO");
         }
 
 
         /* ---- INV komutu (A'nın M modundaki tersini hesaplar) ---- */
 
-    } else if (strcmp(cmd, "INV") == 0) {
-        if (rec->arg_count < 2 || rec->args[1] <= 1) {
-            snprintf(rec->result, sizeof(rec->result),
+    } else if (strcmp(komut, "INV") == 0) {
+        if (kayit->arg_count < 2 || kayit->args[1] <= 1) {
+            snprintf(kayit->result, sizeof(kayit->result),
                      "ERROR_INVALID_INPUT");
-            rec->is_error = 1;
+            kayit->is_error = 1;
         } else {
-            int found = 0;
-            long long r = mod_inverse(rec->args[0],
-                                      rec->args[1], &found);
-            if (!found) {
-                snprintf(rec->result, sizeof(rec->result),
+            int bulundu = 0;
+            long long sonuc = mod_inverse(kayit->args[0],
+                                          kayit->args[1], &bulundu);
+            if (!bulundu) {
+                snprintf(kayit->result, sizeof(kayit->result),
                          "ERROR_NO_INVERSE");
-                rec->is_error = 1;
+                kayit->is_error = 1;
             } else {
-                snprintf(rec->result, sizeof(rec->result),
-                         "%lld", r);
+                snprintf(kayit->result, sizeof(kayit->result),
+                         "%lld", sonuc);
             }
         }
 
 
-        /* ---- PHI komutu(Euler Totient fonksiyonunu hesaplar) ---- */
+        /* ---- PHI komutu (Euler Totient fonksiyonunu hesaplar) ---- */
 
-    } else if (strcmp(cmd, "PHI") == 0) {
-        if (rec->arg_count < 1 || rec->args[0] < 1) {
-            snprintf(rec->result, sizeof(rec->result),
+    } else if (strcmp(komut, "PHI") == 0) {
+        if (kayit->arg_count < 1 || kayit->args[0] < 1) {
+            snprintf(kayit->result, sizeof(kayit->result),
                      "ERROR_INVALID_INPUT");
-            rec->is_error = 1;
+            kayit->is_error = 1;
         } else {
-            long long r = euler_phi(rec->args[0]);
-            snprintf(rec->result, sizeof(rec->result), "%lld", r);
+            long long sonuc = euler_phi(kayit->args[0]);
+            snprintf(kayit->result, sizeof(kayit->result), "%lld", sonuc);
         }
 
 
         /* ---- CHECK komutu (Modüler tersin doğruluğunu test eder) ---- */
 
-    } else if (strcmp(cmd, "CHECK") == 0) {
-        if (rec->arg_count < 2 || rec->args[1] <= 1) {
-            snprintf(rec->result, sizeof(rec->result),
+    } else if (strcmp(komut, "CHECK") == 0) {
+        if (kayit->arg_count < 2 || kayit->args[1] <= 1) {
+            snprintf(kayit->result, sizeof(kayit->result),
                      "ERROR_INVALID_INPUT");
-            rec->is_error = 1;
+            kayit->is_error = 1;
         } else {
-            long long a   = rec->args[0];
-            long long m   = rec->args[1];
-            int       found = 0;
-            long long inv = mod_inverse(a, m, &found);
+            long long taban    = kayit->args[0];
+            long long mod      = kayit->args[1];
+            int       bulundu  = 0;
+            long long ters     = mod_inverse(taban, mod, &bulundu);
 
-            if (!found) {
-                snprintf(rec->result, sizeof(rec->result),
+            if (!bulundu) {
+                snprintf(kayit->result, sizeof(kayit->result),
                          "ERROR_NO_INVERSE");
-                rec->is_error = 1;
+                kayit->is_error = 1;
             } else {
-                /* (a * inv) % m == 1 ise CORRECT */
-                long long check = (a % m * inv % m) % m;
-                snprintf(rec->result, sizeof(rec->result),
-                         check == 1 ? "CORRECT" : "FAILED");
+                /* (taban * ters) % mod == 1 ise CORRECT */
+                long long dogrulama = (taban % mod * ters % mod) % mod;
+                snprintf(kayit->result, sizeof(kayit->result),
+                         dogrulama == 1 ? "CORRECT" : "FAILED");
             }
         }
 
         /* ---- Bilinmeyen komut ---- */
     } else {
-        snprintf(rec->result, sizeof(rec->result),
+        snprintf(kayit->result, sizeof(kayit->result),
                  "ERROR_UNKNOWN_COMMAND");
-        rec->is_error = 1;
+        kayit->is_error = 1;
     }
 }
 
@@ -169,39 +169,39 @@ static void komutu_calistir(CommandRecord *rec) {
  **          Format: KOMUT ARG1 ARG2 ... -> SONUÇ\n
  **          Component : Main \n
  **
- ** \param [in] const char    *filename - Yazılacak çıktı dosyasının yolu
- ** \param [in] CommandList   *list     - Yazılacak komut listesi
+ ** \param [in] const char    *dosya_adi - Yazılacak çıktı dosyasının yolu
+ ** \param [in] CommandList   *liste     - Yazılacak komut listesi
  **
  ** \returns void
  **
  **  ---------------------------------------------------------------------------
  */
 
-static void sonuclari_yazdir(const char *filename, CommandList *list) {
+static void sonuclari_yazdir(const char *dosya_adi, CommandList *liste) {
 
-    FILE *fp = fopen(filename, "w");
-    if (!fp) {
+    FILE *dosya = fopen(dosya_adi, "w");
+    if (!dosya) {
         fprintf(stderr, "Hata: '%s' cikis dosyasi acilamadi.\n",
-                filename);
+                dosya_adi);
         return;
     }
 
-    for (int i = 0; i < list->size; i++) {
-        CommandRecord *rec = &list->records[i];
+    for (int i = 0; i < liste->size; i++) {
+        CommandRecord *kayit = &liste->records[i];
 
         /* Komut adını yaz */
-        fprintf(fp, "%s", rec->command);
+        fprintf(dosya, "%s", kayit->command);
 
         /* Parametreleri yaz */
-        for (int j = 0; j < rec->arg_count; j++) {
-            fprintf(fp, " %lld", rec->args[j]);
+        for (int j = 0; j < kayit->arg_count; j++) {
+            fprintf(dosya, " %lld", kayit->args[j]);
         }
 
         /* Sonucu yaz */
-        fprintf(fp, " -> %s\n", rec->result);
+        fprintf(dosya, " -> %s\n", kayit->result);
     }
 
-    fclose(fp);
+    fclose(dosya);
 }
 
 /*
@@ -234,33 +234,33 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    const char *input_file  = argv[1];
-    const char *output_file = argv[2];
+    const char *giris_dosyasi  = argv[1];
+    const char *cikis_dosyasi  = argv[2];
 
     /* Dinamik komut listesini oluştur */
-    CommandList *list = create_list();
-    if (!list) {
+    CommandList *liste = create_list();
+    if (!liste) {
         fprintf(stderr, "Hata: Bellek ayrilamadi.\n");
         return 1;
     }
 
     /* Girdi dosyasını ayrıştır */
-    if (!parse_file(input_file, list)) {
-        free_list(list);
+    if (!parse_file(giris_dosyasi, liste)) {
+        free_list(liste);
         return 1;
     }
 
-   /* Komutları sırayla çalıştır */
-    for (int i = 0; i < list->size; i++) {
-        komutu_calistir(&list->records[i]);
+    /* Komutları sırayla çalıştır */
+    for (int i = 0; i < liste->size; i++) {
+        komutu_calistir(&liste->records[i]);
     }
 
     /* Sonuçları dosyaya yazdır */
-    sonuclari_yazdir(output_file, list);
+    sonuclari_yazdir(cikis_dosyasi, liste);
 
-    printf("Tamamlandi: %d komut islendi. Sonuclar '%s' dosyasina yazildi.\n", list->size, output_file);
+    printf("Tamamlandi: %d komut islendi. Sonuclar '%s' dosyasina yazildi.\n", liste->size, cikis_dosyasi);
 
     /* Belleği temizle ve dosyaları kapat */
-    free_list(list);
+    free_list(liste);
     return 0;
 }

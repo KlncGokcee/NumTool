@@ -19,20 +19,25 @@
 
 /* --------------    Defines    -------------------------------------------------- */
 
-#define CMD_NAME_LEN    20    /* Komut adı için maksimum karakter sayısı */
-#define CMD_MAX_ARGS     4    /* Bir komutun alabileceği maksimum parametre sayısı */
-#define CMD_RESULT_LEN 100    /* Sonuç metni için maksimum karakter sayısı */
+#define KOMUT_ADI_UZUNLUGU    20    /* Komut adı için maksimum karakter sayısı */
+#define KOMUT_MAKS_PARAMETRE   4    /* Bir komutun alabileceği maksimum parametre sayısı */
+#define KOMUT_SONUC_UZUNLUGU 100    /* Sonuç metni için maksimum karakter sayısı */
+
+/* Eski isimler — diğer dosyalar hâlâ bunları kullanıyorsa derleme kırılmasın diye takma ad */
+#define CMD_NAME_LEN    KOMUT_ADI_UZUNLUGU
+#define CMD_MAX_ARGS    KOMUT_MAKS_PARAMETRE
+#define CMD_RESULT_LEN  KOMUT_SONUC_UZUNLUGU
 
 /* --------------    Types    ---------------------------------------------------- */
 
 // Her bir komutu ve sonucunu tutan kayıt yapısı
 
 typedef struct {
-    char      command[CMD_NAME_LEN];   /* Komut adı: GCD, POW, PRIME vb. */
-    long long args[CMD_MAX_ARGS];      /* Komut parametreleri             */
-    int       arg_count;               /* Gerçek parametre sayısı         */
-    char      result[CMD_RESULT_LEN];  /* Hesaplanan sonuç metni          */
-    int       is_error;                /* Hata varsa 1, yoksa 0           */
+    char      command[KOMUT_ADI_UZUNLUGU];    /* Komut adı: GCD, POW, PRIME vb. */
+    long long args[KOMUT_MAKS_PARAMETRE];     /* Komut parametreleri             */
+    int       arg_count;                      /* Gerçek parametre sayısı         */
+    char      result[KOMUT_SONUC_UZUNLUGU];   /* Hesaplanan sonuç metni          */
+    int       is_error;                       /* Hata varsa 1, yoksa 0           */
 } CommandRecord;
 
 // Dinamik dizi yapısı: komutları esnek boyutlu bellekte tutar
@@ -55,16 +60,16 @@ CommandList *create_list(void);
 
 /*
  * \brief  CommandList ve içindeki kayıtlar için ayrılmış belleği serbest bırakır.
- * \param  list  Serbest bırakılacak liste işaretçisi.
+ * \param  liste  Serbest bırakılacak liste işaretçisi.
  */
-void free_list(CommandList *list);
+void free_list(CommandList *liste);
 
 /*
  * \brief  Belirtilen dosyayı satır satır okur, komutları ayrıştırarak listeye ekler.
- * \param  filename  Okunacak dosyanın yolu.
- * \param  list      Ayrıştırılan komutların ekleneceği liste.
- * \return Başarıda 0; hata durumunda negatif değer.
+ * \param  dosya_adi  Okunacak dosyanın yolu.
+ * \param  liste      Ayrıştırılan komutların ekleneceği liste.
+ * \return Başarıda 1; hata durumunda 0.
  */
-int parse_file(const char *filename, CommandList *list);
+int parse_file(const char *dosya_adi, CommandList *liste);
 
 #endif /* PARSER_H */

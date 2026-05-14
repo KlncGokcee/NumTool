@@ -23,19 +23,19 @@
 
 /* --------------    Static Variables    -------------------------------------------- */
 
-#define INITIAL_CAPACITY 8    /* Başlangıç kapasitesi       */
-#define LINE_SIZE        512  /* Maksimum satır uzunluğu    */
+#define BASLANGIC_KAPASITESI 8    /* Başlangıç kapasitesi       */
+#define SATIR_BOYUTU        512   /* Maksimum satır uzunluğu    */
 
 /* --------------    Static Function Prototypes    ----------------------------------- */
 
-static char *trim(char *s);
-static int   add_record(CommandList *list, CommandRecord *rec);
-static void  parse_command(char *token, CommandRecord *rec);
+static char *bosluklari_temizle(char *s);
+static int   kayit_ekle(CommandList *liste, CommandRecord *kayit);
+static void  komutu_ayristir(char *parca, CommandRecord *kayit);
 
 
 /*
  **  ---------------------------------------------------------------------------
- **  Name : trim (kırpmak/temizlemek)
+ **  Name : bosluklari_temizle (trim)
  **
  ** \brief
  **          Verilen karakter dizisinin baştaki ve sondaki boşluk
@@ -52,15 +52,15 @@ static void  parse_command(char *token, CommandRecord *rec);
 /* --------------    Function Declarations    ---------------------------------------- */
 
 
-static char *trim(char *s) {
+static char *bosluklari_temizle(char *s) {
     // Baştaki boşlukları atla
     while (isspace((unsigned char)*s)) s++;
     if (*s == '\0') return s;
 
     // Sondaki boşlukları sil
-    char *end = s + strlen(s) - 1;
-    while (end > s && isspace((unsigned char)*end)) end--;
-    *(end + 1) = '\0';
+    char *son = s + strlen(s) - 1;
+    while (son > s && isspace((unsigned char)*son)) son--;
+    *(son + 1) = '\0';
     return s;
 }
 
@@ -78,62 +78,62 @@ static char *trim(char *s) {
  **  ---------------------------------------------------------------------------
  */
 CommandList *create_list(void) {
-    CommandList *list = (CommandList *)malloc(sizeof(CommandList));
-    if (!list) return NULL;
+    CommandList *liste = (CommandList *)malloc(sizeof(CommandList));
+    if (!liste) return NULL;
 
-    list->records = (CommandRecord *)malloc(INITIAL_CAPACITY
-                                            * sizeof(CommandRecord));
-    if (!list->records) {
-        free(list);
+    liste->records = (CommandRecord *)malloc(BASLANGIC_KAPASITESI
+                                             * sizeof(CommandRecord));
+    if (!liste->records) {
+        free(liste);
         return NULL;
     }
-    list->size     = 0;
-    list->capacity = INITIAL_CAPACITY;
-    return list;
+    liste->size     = 0;
+    liste->capacity = BASLANGIC_KAPASITESI;
+    return liste;
 }
 
 /*
  **  ---------------------------------------------------------------------------
- **  Name : add_record
+ **  Name : kayit_ekle (add_record)
  **
  ** \brief
  **          Listeye yeni bir komut kaydı ekler. Kapasite dolarsa realloc
  **          ile iki katına büyütür.\n
  **          Component : Parser \n
  **
- ** \param [in] CommandList   *list - Kaydın ekleneceği liste
- ** \param [in] CommandRecord *rec  - Eklenecek komut kaydı
+ ** \param [in] CommandList   *liste - Kaydın ekleneceği liste
+ ** \param [in] CommandRecord *kayit - Eklenecek komut kaydı
  **
  ** \returns int    1 : Başarıyla eklendi
  **                 0 : Bellek hatası
  **
  **  ---------------------------------------------------------------------------
  */
-static int add_record(CommandList *list, CommandRecord *rec) {
-    //  Kapasite doldu mu?
-    if (list->size >= list->capacity) {
-        int new_cap = list->capacity * 2;
-        CommandRecord *tmp = (CommandRecord *)realloc(
-                list->records, new_cap * sizeof(CommandRecord));
-        if (!tmp) return 0; /* Bellek hatası */
-        list->records  = tmp;
-        list->capacity = new_cap;
+static int kayit_ekle(CommandList *liste, CommandRecord *kayit) {
+    // Kapasite doldu mu?
+    if (liste->size >= liste->capacity) {
+        int yeni_kapasite = liste->capacity * 2;
+        CommandRecord *gecici = (CommandRecord *)realloc(
+                liste->records, yeni_kapasite * sizeof(CommandRecord));
+        if (!gecici) return 0; /* Bellek hatası */
+        liste->records  = gecici;
+        liste->capacity = yeni_kapasite;
     }
-    list->records[list->size++] = *rec;
+    liste->records[liste->size++] = *kayit;
     return 1;
 }
 
 /*
  **  ---------------------------------------------------------------------------
- **  Name : parse_command
+ **  Name : komutu_ayristir (parse_command)
  **
  ** \brief
  **          Tek bir komut metnini (örn: "GCD 48 18") ayrıştırır ve
  **          CommandRecord yapısını komut adı ile parametrelerle doldurur.\n
  **          Component : Parser \n
  **
- ** \param [in]  char          *token - Ayrıştırılacak komut metni
- ** \param [out] CommandRecord *rec   - Doldurulan komut kaydı
+ ** \param [in]  char          *parca - Ayrıştırılacak komut metni
+ ** \param [out] CommandRecord *kayit - Doldurulan komut kaydı
  **
  ** \returns void
  **
@@ -141,30 +141,30 @@ static int add_record(CommandList *list, CommandRecord *rec) {
  */
 
 
-static void parse_command(char *token, CommandRecord *rec) {
-    memset(rec, 0, sizeof(CommandRecord));
+static void komutu_ayristir(char *parca, CommandRecord *kayit) {
+    memset(kayit, 0, sizeof(CommandRecord));
 
     // Komut adını oku
-    char cmd[20] = {0};
-    int  offset  = 0;
+    char komut_adi[20] = {0};
+    int  ofset         = 0;
 
-    if (sscanf(token, "%19s%n", cmd, &offset) < 1) {
-        snprintf(rec->result, sizeof(rec->result), "PARSE_ERROR");
-        rec->is_error = 1;
+    if (sscanf(parca, "%19s%n", komut_adi, &ofset) < 1) {
+        snprintf(kayit->result, sizeof(kayit->result), "PARSE_ERROR");
+        kayit->is_error = 1;
         return;
     }
-    snprintf(rec->command, sizeof(rec->command), "%s", cmd);
+    snprintf(kayit->command, sizeof(kayit->command), "%s", komut_adi);
 
     // Parametreleri oku
-    char     *rest = token + offset;
-    long long  val;
-    int        n;
+    char     *kalan = parca + ofset;
+    long long deger;
+    int       n;
 
-    rec->arg_count = 0;
-    while (sscanf(rest, " %lld%n", &val, &n) == 1
-           && rec->arg_count < 4) {
-        rec->args[rec->arg_count++] = val;
-        rest += n;
+    kayit->arg_count = 0;
+    while (sscanf(kalan, " %lld%n", &deger, &n) == 1
+           && kayit->arg_count < 4) {
+        kayit->args[kayit->arg_count++] = deger;
+        kalan += n;
     }
 }
 
@@ -178,8 +178,8 @@ static void parse_command(char *token, CommandRecord *rec) {
  **          listeye ekler.\n
  **          Component : Parser \n
  **
- ** \param [in]  const char  *filename - Okunacak dosyanın yolu
- ** \param [out] CommandList *list     - Ayrıştırılan komutların ekleneceği liste
+ ** \param [in]  const char  *dosya_adi - Okunacak dosyanın yolu
+ ** \param [out] CommandList *liste     - Ayrıştırılan komutların ekleneceği liste
  **
  ** \returns int    1 : Başarıyla tamamlandı
  **                 0 : Dosya açılamadı veya bellek hatası
@@ -187,41 +187,41 @@ static void parse_command(char *token, CommandRecord *rec) {
  **  ---------------------------------------------------------------------------
  */
 
-int parse_file(const char *filename, CommandList *list) {
-    FILE *fp = fopen(filename, "r");
-    if (!fp) {
-        fprintf(stderr, "Hata: '%s' dosyasi acilamadi.\n", filename);
+int parse_file(const char *dosya_adi, CommandList *liste) {
+    FILE *dosya = fopen(dosya_adi, "r");
+    if (!dosya) {
+        fprintf(stderr, "Hata: '%s' dosyasi acilamadi.\n", dosya_adi);
         return 0;
     }
 
-    char line[LINE_SIZE];
+    char satir[SATIR_BOYUTU];
 
-    while (fgets(line, sizeof(line), fp)) {
-        char *trimmed = trim(line);
+    while (fgets(satir, sizeof(satir), dosya)) {
+        char *temiz_satir = bosluklari_temizle(satir);
 
         // Boş satır veya yorum satırı ise atla
-        if (trimmed[0] == '\0' || trimmed[0] == '#') continue;
+        if (temiz_satir[0] == '\0' || temiz_satir[0] == '#') continue;
 
         // Noktalı virgülle ayrılmış komutları böl
-        char *saveptr = NULL;
-        char *token   = strtok_r(trimmed, ";", &saveptr);
+        char *kayit_ptr = NULL;
+        char *parca     = strtok_r(temiz_satir, ";", &kayit_ptr);
 
-        while (token != NULL) {
-            char *t = trim(token);
-            if (t[0] != '\0') {
-                CommandRecord rec;
-                parse_command(t, &rec);
-                if (!add_record(list, &rec)) {
+        while (parca != NULL) {
+            char *temiz_parca = bosluklari_temizle(parca);
+            if (temiz_parca[0] != '\0') {
+                CommandRecord kayit;
+                komutu_ayristir(temiz_parca, &kayit);
+                if (!kayit_ekle(liste, &kayit)) {
                     fprintf(stderr, "Hata: Komut listesi genisletilemedi.\n");
-                    fclose(fp);
+                    fclose(dosya);
                     return 0;
                 }
             }
-            token = strtok_r(NULL, ";", &saveptr);
+            parca = strtok_r(NULL, ";", &kayit_ptr);
         }
     }
 
-    fclose(fp);
+    fclose(dosya);
     return 1;
 }
 
@@ -234,14 +234,14 @@ int parse_file(const char *filename, CommandList *list) {
  **          NULL işaretçi ile çağrılması güvenlidir.\n
  **          Component : Parser \n
  **
- ** \param [in] CommandList *list - Serbest bırakılacak liste işaretçisi
+ ** \param [in] CommandList *liste - Serbest bırakılacak liste işaretçisi
  **
  ** \returns void
  **
  **  ---------------------------------------------------------------------------
  */
-void free_list(CommandList *list) {
-    if (!list) return;
-    free(list->records);
-    free(list);
+void free_list(CommandList *liste) {
+    if (!liste) return;
+    free(liste->records);
+    free(liste);
 }
