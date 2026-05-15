@@ -193,28 +193,61 @@ static void sonucu_yazdir(CommandRecord *kayit) {
     printf(" -> %s\n", kayit->result);
 }
 
+
 /*
  **  ---------------------------------------------------------------------------
- **  Name : main
+ **  Name : sonuclari_yazdir
  **
  ** \brief
- **          Program giriş noktası. Interaktif terminal döngüsünü başlatır.
+ **          Tüm komut kayıtlarını çıktı dosyasına yazar.
+ **          Format: KOMUT ARG1 ARG2 ... -> SONUÇ\n
+ **          Component : Main \n
+ **
+ ** \param [in] const char  *dosya_adi - Yazılacak çıktı dosyasının yolu
+ ** \param [in] CommandList *liste     - Yazılacak komut listesi
+ **
+ ** \returns void
+ **
+ **  ---------------------------------------------------------------------------
+ */
+
+static void sonuclari_yazdir(const char *dosya_adi, CommandList *liste) {
+
+    FILE *dosya = fopen(dosya_adi, "w");
+    if (!dosya) {
+        fprintf(stderr, "Hata: '%s' cikis dosyasi acilamadi.\n", dosya_adi);
+        return;
+    }
+
+    for (int i = 0; i < liste->size; i++) {
+        CommandRecord *kayit = &liste->records[i];
+        fprintf(dosya, "%s", kayit->command);
+        for (int j = 0; j < kayit->arg_count; j++)
+            fprintf(dosya, " %lld", kayit->args[j]);
+        fprintf(dosya, " -> %s\n", kayit->result);
+    }
+
+    fclose(dosya);
+}
+
+
+/*
+ **  ---------------------------------------------------------------------------
+ **  Name : terminal_modu
+ **
+ ** \brief
+ **          Interaktif terminal döngüsünü başlatır.
  **          Kullanıcıdan satır satır komut alır, hesaplar ve sonucu
  **          terminale yazar. "exit" veya "quit" ile çıkılır.\n
  **          Component : Main \n
  **
- ** \param [in] int    argc     - Komut satırı argüman sayısı (kullanılmıyor)
- ** \param [in] char  *argv[]   - Komut satırı argümanları   (kullanılmıyor)
- **
- ** \returns int    0 : Başarıyla tamamlandı
- **                 1 : Hata oluştu
+ ** \returns void
  **
  **  ---------------------------------------------------------------------------
  */
-int main(int argc, char *argv[]) {
 
-    (void)argc;
-    (void)argv;
+
+static void terminal_modu(void) {
 
     char satir[SATIR_BOYUTU];
 
@@ -255,7 +288,7 @@ int main(int argc, char *argv[]) {
         CommandList *liste = create_list();
         if (!liste) {
             fprintf(stderr, "Hata: Bellek ayrilamadi.\n");
-            return 1;
+            return;
         }
 
         /* Satırı ayrıştır (noktalı virgülle birden fazla komut olabilir) */
@@ -307,6 +340,73 @@ int main(int argc, char *argv[]) {
         }
 
         free_list(liste);
+    }
+}
+
+/*
+ **  ---------------------------------------------------------------------------
+ **  Name : main
+ **
+ ** \brief
+ **          Program giriş noktası. Argüman sayısını kontrol eder.\n
+ **          argc == 3 : Dosya modu — girdi dosyasını okur, sonuçları
+ **                      çıktı dosyasına yazar.\n
+ **          argc == 1 : Terminal modu — interaktif döngü başlatır.\n
+ **          Diğer     : Kullanım bilgisi verilip program sonlandırılır.\n
+ **          Component : Main \n
+ **
+ ** \param [in] int    argc   - Komut satırı argüman sayısı
+ ** \param [in] char  *argv[] - argv[1]: girdi dosyası, argv[2]: çıktı dosyası
+ **
+ ** \returns int    0 : Başarıyla tamamlandı
+ **                 1 : Hata oluştu
+ **
+ **
+ **  ---------------------------------------------------------------------------
+ */
+
+int main(int argc, char *argv[]) {
+
+    /* Argüman sayısı kontrolü */
+    if (argc != 3 && argc != 1) {
+        fprintf(stderr, "Kullanim:\n");
+        fprintf(stderr, "  Dosya modu    : %s <giris_dosyasi> <cikis_dosyasi>\n",
+                argv[0]);
+        fprintf(stderr, "  Terminal modu : %s\n", argv[0]);
+        return 1;
+    }
+
+    if (argc == 3) {
+
+        /* ---- Dosya modu ---- */
+        const char *giris_dosyasi = argv[1];
+        const char *cikis_dosyasi = argv[2];
+
+        CommandList *liste = create_list();
+        if (!liste) {
+            fprintf(stderr, "Hata: Bellek ayrilamadi.\n");
+            return 1;
+        }
+
+        if (!parse_file(giris_dosyasi, liste)) {
+            free_list(liste);
+            return 1;
+        }
+
+        for (int i = 0; i < liste->size; i++)
+            komutu_calistir(&liste->records[i]);
+
+        sonuclari_yazdir(cikis_dosyasi, liste);
+
+        printf("Tamamlandi: %d komut islendi. Sonuclar '%s' dosyasina yazildi.\n",
+               liste->size, cikis_dosyasi);
+
+        free_list(liste);
+
+    } else {
+
+        /* ---- Terminal modu ---- */
+        terminal_modu();
     }
 
     return 0;
