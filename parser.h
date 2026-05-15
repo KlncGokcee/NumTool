@@ -72,4 +72,12 @@ void free_list(CommandList *liste);
  */
 int parse_file(const char *dosya_adi, CommandList *liste);
 
+/*
+ * \brief  Listeye yeni bir komut kaydı ekler. Kapasite dolarsa iki katına büyütür.
+ * \param  liste  Kaydın ekleneceği liste.
+ * \param  kayit  Eklenecek komut kaydı.
+ * \return Başarıda 1; bellek hatasında 0.
+ */
+int kayit_ekle(CommandList *liste, CommandRecord *kayit);
+
 #endif /* PARSER_H */

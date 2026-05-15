@@ -23,9 +23,13 @@
 
 
 static void komutu_calistir(CommandRecord *kayit);
-static void sonuclari_yazdir(const char *dosya_adi, CommandList *liste);
+static void sonucu_yazdir(CommandRecord *kayit);
 
 
+
+/* --------------    Defines    ----------------------------------------------------- */
+
+#define SATIR_BOYUTU 512   /* Maksimum girdi satırı uzunluğu */
 
 /*
  **  ---------------------------------------------------------------------------
@@ -177,31 +181,33 @@ static void komutu_calistir(CommandRecord *kayit) {
  **  ---------------------------------------------------------------------------
  */
 
-static void sonuclari_yazdir(const char *dosya_adi, CommandList *liste) {
+/*
+ **  ---------------------------------------------------------------------------
+ **  Name : sonucu_yazdir (print_result)
+ **
+ ** \brief
+ **          Tek bir komut kaydının sonucunu terminale (stdout) yazar.
+ **          Format: KOMUT ARG1 ARG2 ... -> SONUÇ\n
+ **          Component : Main \n
+ **
+ ** \param [in] CommandRecord *kayit - Yazdırılacak komut kaydı
+ **
+ ** \returns void
+ **
+ **  ---------------------------------------------------------------------------
+ */
+static void sonucu_yazdir(CommandRecord *kayit) {
 
-    FILE *dosya = fopen(dosya_adi, "w");
-    if (!dosya) {
-        fprintf(stderr, "Hata: '%s' cikis dosyasi acilamadi.\n",
-                dosya_adi);
-        return;
+    /* Komut adını yaz */
+    printf("%s", kayit->command);
+
+    /* Parametreleri yaz */
+    for (int j = 0; j < kayit->arg_count; j++) {
+        printf(" %lld", kayit->args[j]);
     }
 
-    for (int i = 0; i < liste->size; i++) {
-        CommandRecord *kayit = &liste->records[i];
-
-        /* Komut adını yaz */
-        fprintf(dosya, "%s", kayit->command);
-
-        /* Parametreleri yaz */
-        for (int j = 0; j < kayit->arg_count; j++) {
-            fprintf(dosya, " %lld", kayit->args[j]);
-        }
-
-        /* Sonucu yaz */
-        fprintf(dosya, " -> %s\n", kayit->result);
-    }
-
-    fclose(dosya);
+    /* Sonucu yaz */
+    printf(" -> %s\n", kayit->result);
 }
 
 /*
@@ -209,14 +215,13 @@ static void sonuclari_yazdir(const char *dosya_adi, CommandList *liste) {
  **  Name : main
  **
  ** \brief
- **          Program giriş noktası. Argüman kontrolü, liste oluşturma,
- **          komut işleme ve sonuç yazma adımlarını sırasıyla yürütür.\n
+ **          Program giriş noktası. Interaktif terminal döngüsünü başlatır.
+ **          Kullanıcıdan satır satır komut alır, hesaplar ve sonucu
+ **          terminale yazar. "exit" veya "quit" ile çıkılır.\n
  **          Component : Main \n
  **
- ** \param [in] int    argc     - Komut satırı argüman sayısı
- ** \param [in] char  *argv[]   - Komut satırı argümanları
- **                               argv[1]: Girdi dosyası yolu
- **                               argv[2]: Çıktı dosyası yolu
+ ** \param [in] int    argc     - Komut satırı argüman sayısı (kullanılmıyor)
+ ** \param [in] char  *argv[]   - Komut satırı argümanları   (kullanılmıyor)
  **
  ** \returns int    0 : Başarıyla tamamlandı
  **                 1 : Hata oluştu
@@ -225,42 +230,101 @@ static void sonuclari_yazdir(const char *dosya_adi, CommandList *liste) {
  */
 int main(int argc, char *argv[]) {
 
-    /* Argüman sayısı kontrolü */
+    (void)argc;
+    (void)argv;
 
-    if (argc != 3) {
-        fprintf(stderr,
-                "Kullanim: %s <giris_dosyasi> <cikis_dosyasi>\n",
-                argv[0]);
-        return 1;
-    }
+    char satir[SATIR_BOYUTU];
 
-    const char *giris_dosyasi  = argv[1];
-    const char *cikis_dosyasi  = argv[2];
+    /* Karşılama mesajı */
+    printf("============================================\n");
+    printf("  NumTool - Sayi Teorisi Hesaplama Araci\n");
+    printf("============================================\n");
+    printf("Komutlar : GCD  POW  PRIME  INV  PHI  CHECK\n");
+    printf("Cikis    : exit veya quit\n");
+    printf("--------------------------------------------\n");
 
-    /* Dinamik komut listesini oluştur */
-    CommandList *liste = create_list();
-    if (!liste) {
-        fprintf(stderr, "Hata: Bellek ayrilamadi.\n");
-        return 1;
-    }
+    /* Interaktif komut döngüsü */
+    while (1) {
+        /* Komut istemi yaz */
+        printf("numtool> ");
+        fflush(stdout);
 
-    /* Girdi dosyasını ayrıştır */
-    if (!parse_file(giris_dosyasi, liste)) {
+        /* Kullanıcıdan satır oku; EOF gelirse (Ctrl+D) çık */
+        if (fgets(satir, sizeof(satir), stdin) == NULL) {
+            printf("\nCikiliyor...\n");
+            break;
+        }
+
+        /* Boş satırı atla */
+        if (satir[0] == '\n') continue;
+
+        /* Yorum satırını atla */
+        if (satir[0] == '#') continue;
+
+        /* "exit" veya "quit" kontrolü */
+        if (strncmp(satir, "exit", 4) == 0 ||
+            strncmp(satir, "quit", 4) == 0) {
+            printf("Cikiliyor...\n");
+            break;
+        }
+
+        /* Geçici tek-kayıt listesi oluştur */
+        CommandList *liste = create_list();
+        if (!liste) {
+            fprintf(stderr, "Hata: Bellek ayrilamadi.\n");
+            return 1;
+        }
+
+        /* Satırı ayrıştır (noktalı virgülle birden fazla komut olabilir) */
+        char *kayit_ptr = NULL;
+        char *parca     = strtok_r(satir, ";", &kayit_ptr);
+
+        while (parca != NULL) {
+            /* Baş-sondaki boşlukları temizle */
+            while (*parca == ' ' || *parca == '\t') parca++;
+            char *son = parca + strlen(parca) - 1;
+            while (son > parca && (*son == ' ' || *son == '\t' ||
+                                   *son == '\n' || *son == '\r')) {
+                *son-- = '\0';
+            }
+
+            if (parca[0] != '\0') {
+                /* Geçici CommandRecord oluştur ve ayrıştır */
+                CommandRecord kayit;
+                memset(&kayit, 0, sizeof(CommandRecord));
+
+                char komut_adi[20] = {0};
+                int  ofset         = 0;
+
+                if (sscanf(parca, "%19s%n", komut_adi, &ofset) >= 1) {
+                    snprintf(kayit.command, sizeof(kayit.command),
+                             "%s", komut_adi);
+
+                    char     *kalan = parca + ofset;
+                    long long deger;
+                    int       n;
+                    kayit.arg_count = 0;
+
+                    while (sscanf(kalan, " %lld%n", &deger, &n) == 1
+                           && kayit.arg_count < KOMUT_MAKS_PARAMETRE) {
+                        kayit.args[kayit.arg_count++] = deger;
+                        kalan += n;
+                    }
+
+                    kayit_ekle(liste, &kayit);
+                }
+            }
+            parca = strtok_r(NULL, ";", &kayit_ptr);
+        }
+
+        /* Komutları çalıştır ve sonuçları terminale yaz */
+        for (int i = 0; i < liste->size; i++) {
+            komutu_calistir(&liste->records[i]);
+            sonucu_yazdir(&liste->records[i]);
+        }
+
         free_list(liste);
-        return 1;
     }
 
-    /* Komutları sırayla çalıştır */
-    for (int i = 0; i < liste->size; i++) {
-        komutu_calistir(&liste->records[i]);
-    }
-
-    /* Sonuçları dosyaya yazdır */
-    sonuclari_yazdir(cikis_dosyasi, liste);
-
-    printf("Tamamlandi: %d komut islendi. Sonuclar '%s' dosyasina yazildi.\n", liste->size, cikis_dosyasi);
-
-    /* Belleği temizle ve dosyaları kapat */
-    free_list(liste);
     return 0;
 }

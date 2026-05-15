@@ -29,7 +29,6 @@
 /* --------------    Static Function Prototypes    ----------------------------------- */
 
 static char *bosluklari_temizle(char *s);
-static int   kayit_ekle(CommandList *liste, CommandRecord *kayit);
 static void  komutu_ayristir(char *parca, CommandRecord *kayit);
 
 
@@ -109,7 +108,7 @@ CommandList *create_list(void) {
  **
  **  ---------------------------------------------------------------------------
  */
-static int kayit_ekle(CommandList *liste, CommandRecord *kayit) {
+int kayit_ekle(CommandList *liste, CommandRecord *kayit) {
     // Kapasite doldu mu?
     if (liste->size >= liste->capacity) {
         int yeni_kapasite = liste->capacity * 2;
