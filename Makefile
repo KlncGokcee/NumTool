@@ -25,7 +25,7 @@ math_utils.o: math_utils.c math_utils.h
 
 # Derleme dosyalarını ve çalıştırılabiliri sil
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS)
 	@echo "Temizlendi."
 
 .PHONY: all clean

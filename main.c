@@ -19,6 +19,10 @@
 #include "math_utils.h"
 
 
+/* --------------    Defines    ----------------------------------------------------- */
+
+#define SATIR_BOYUTU 512   /* Maksimum girdi satırı uzunluğu */
+
 /* --------------    Static Function Prototypes    ----------------------------------- */
 
 
@@ -26,10 +30,6 @@ static void komutu_calistir(CommandRecord *kayit);
 static void sonucu_yazdir(CommandRecord *kayit);
 
 
-
-/* --------------    Defines    ----------------------------------------------------- */
-
-#define SATIR_BOYUTU 512   /* Maksimum girdi satırı uzunluğu */
 
 /*
  **  ---------------------------------------------------------------------------
@@ -163,23 +163,6 @@ static void komutu_calistir(CommandRecord *kayit) {
     }
 }
 
-/*
- **  ---------------------------------------------------------------------------
-
- **  Name : sonuclari_yazdir (write_results)
- **
- ** \brief
- **          Tüm komut kayıtlarını çıktı dosyasına yazar.
- **          Format: KOMUT ARG1 ARG2 ... -> SONUÇ\n
- **          Component : Main \n
- **
- ** \param [in] const char    *dosya_adi - Yazılacak çıktı dosyasının yolu
- ** \param [in] CommandList   *liste     - Yazılacak komut listesi
- **
- ** \returns void
- **
- **  ---------------------------------------------------------------------------
- */
 
 /*
  **  ---------------------------------------------------------------------------
